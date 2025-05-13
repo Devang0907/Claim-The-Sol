@@ -17,7 +17,7 @@ export default function Home() {
       <header className="container mx-auto flex items-center justify-between py-6">
         <div className="flex items-center gap-2">
           <Coins className="h-8 w-8 text-yellow-400" />
-          <h1 className="text-2xl font-bold text-white">Claim Your SOL</h1>
+          <h1 className="text-2xl font-bold text-white">SOLBACK</h1>
         </div>
         <WalletConnectButton />
       </header>
@@ -63,9 +63,6 @@ export default function Home() {
                 <Link href="/app">
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-purple-400 text-purple-100 hover:bg-purple-800">
-                Learn More
               </Button>
             </div>
           </div>

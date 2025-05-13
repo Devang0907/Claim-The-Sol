@@ -9,13 +9,17 @@ import "@/app/globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Claim Your SOL - Reclaim Rent from Empty Token Accounts",
+  title: "SOLBACK",
   description: "Scan your wallet for empty SPL token accounts and reclaim your locked SOL",
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      
       <body className={inter.className}>
         <SolanaWalletProvider>{children}</SolanaWalletProvider>
         <Toaster />
