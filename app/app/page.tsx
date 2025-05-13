@@ -34,6 +34,7 @@ export default function AppPage() {
   const totalRecoverable = totalSelected * 0.00203
   const donationAmount = (totalRecoverable * donationPercentage) / 100
   const userReceives = totalRecoverable - donationAmount
+  const cluster = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'mainnet-beta'
 
   const handleScanAccounts = async () => {
     if (!connected || !publicKey) {
@@ -159,7 +160,7 @@ export default function AppPage() {
                   </div>
                   <Button
                     variant="outline"
-                    className="border-purple-600 text-purple-200 hover:bg-purple-800 hover:text-white"
+                    className="border-purple-800 font-semibold text-purple-200 bg-purple-600 hover:bg-purple-800 hover:text-white"
                     onClick={handleScanAccounts}
                     disabled={isScanning || !connected}
                   >
@@ -191,9 +192,9 @@ export default function AppPage() {
                       <span>Scanning wallet for empty token accounts...</span>
                       <span>{scanProgress}%</span>
                     </div>
-                    <Progress 
-                      value={scanProgress} 
-                      className="h-2 bg-purple-900 [&>div]:bg-yellow-500" 
+                    <Progress
+                      value={scanProgress}
+                      className="h-2 bg-purple-900 [&>div]:bg-yellow-500"
                     />
                     <div className="space-y-2">
                       {[1, 2, 3, 4, 5].map((i) => (
@@ -347,7 +348,7 @@ export default function AppPage() {
                     <Check className="mx-auto mb-2 h-6 w-6 text-green-400" />
                     <p className="mb-2 text-sm font-medium text-green-400">Transaction Successful!</p>
                     <a
-                      href={`https://explorer.solana.com/tx/${txSignature}`}
+                      href={`https://explorer.solana.com/tx/${txSignature}${cluster !== 'mainnet-beta' ? `?cluster=${cluster}` : ''}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-green-300 hover:text-green-200"
@@ -355,6 +356,7 @@ export default function AppPage() {
                       View on Explorer
                       <ExternalLink className="h-3 w-3" />
                     </a>
+
                   </div>
                 )}
               </CardContent>

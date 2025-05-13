@@ -72,39 +72,37 @@ export async function closeEmptyAccounts(
   wallet: WalletAdapter,
 ): Promise<string> {
   try {
-    // Get latest blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-    
+    // Step 1: Get latest blockhash
+    const latestBlockhash = await connection.getLatestBlockhash();
+
+    // Step 2: Create transaction with close instructions
     const transaction = new Transaction();
-    transaction.recentBlockhash = blockhash;
+
+    for (const address of accountAddresses) {
+      const tokenAccountPubkey = new PublicKey(address);
+
+      const closeIx = createCloseAccountInstruction(
+        tokenAccountPubkey,   // account to close
+        walletPublicKey,      // destination (reclaimed SOL goes here)
+        walletPublicKey       // authority (user who owns the token account)
+      );
+
+      transaction.add(closeIx);
+    }
+
+    // Step 3: Set blockhash & fee payer 
+    transaction.recentBlockhash = latestBlockhash.blockhash;
     transaction.feePayer = walletPublicKey;
 
-    for (const accountAddress of accountAddresses) {
-      const accountPubkey = new PublicKey(accountAddress);
-      
-      // Create close instruction - note the proper parameter order
-      const closeInstruction = createCloseAccountInstruction(
-        accountPubkey,         // Account to close
-        walletPublicKey,       // Destination for recovered SOL
-        walletPublicKey        // Authority (owner of the account)
-      );
-      
-      transaction.add(closeInstruction);
-    }
-
-    // Sign and send the transaction
+    // Step 4: Send transaction
     const signature = await wallet.sendTransaction(transaction, connection);
-    
-    // Proper confirmation with commitment and timeout
-    const confirmationResult = await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight
+
+    // Step 5: Confirm transaction with new style API
+    await connection.confirmTransaction({
+      blockhash: latestBlockhash.blockhash,
+      lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+      signature: signature,
     }, 'confirmed');
-    
-    if (confirmationResult.value.err) {
-      throw new Error(`Transaction failed: ${confirmationResult.value.err}`);
-    }
 
     return signature;
   } catch (error) {
