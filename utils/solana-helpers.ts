@@ -1,6 +1,6 @@
-import { Connection, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js"
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js"
 import { Transaction } from "@solana/web3.js"
-import { createCloseAccountInstruction, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { createCloseAccountInstruction, TOKEN_PROGRAM_ID, AccountLayout  } from "@solana/spl-token"
 import { WalletAdapter } from "@solana/wallet-adapter-base"
 
 export interface EmptyTokenAccount {
@@ -11,7 +11,7 @@ export interface EmptyTokenAccount {
 }
 
 /**
- * Scans a wallet for empty token accounts
+ * Scans a wallet for empty token accounts that are rent-exempt (reclaimable)
  * @param connection Solana connection
  * @param walletAddress Public key of the wallet to scan
  * @returns Array of empty token accounts with their details
@@ -21,12 +21,18 @@ export async function scanEmptyTokenAccounts(
   walletAddress: PublicKey,
 ): Promise<EmptyTokenAccount[]> {
   try {
-    // Get all token accounts owned by this wallet
+    // Get all token accounts owned by the wallet
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletAddress, {
       programId: TOKEN_PROGRAM_ID,
     })
 
-    // Filter for accounts with 0 balance
+    // Get the rent-exempt minimum for a token account
+    const rentExemptAmount = await connection.getMinimumBalanceForRentExemption(AccountLayout.span)
+
+    // Convert lamports to SOL
+    const rentExemptSOL = rentExemptAmount / LAMPORTS_PER_SOL
+
+    // Filter for 0 balance accounts (empty)
     const emptyAccounts = tokenAccounts.value
       .filter((account) => {
         const parsedInfo = account.account.data.parsed.info
@@ -37,16 +43,11 @@ export async function scanEmptyTokenAccounts(
         const parsedInfo = account.account.data.parsed.info
         const mintAddress = parsedInfo.mint
 
-        // Get a shortened version of the mint name (in a real app, you'd use a token registry)
-        // This is just a placeholder - in production you'd look up the actual token name
-        const mintName = mintAddress.slice(0, 4)
-
         return {
           address: account.pubkey.toString(),
-          mint: mintName,
-          mintAddress: mintAddress,
-          // Each account holds ~0.00203 SOL in rent
-          amount: 0.00203,
+          mint: mintAddress.slice(0, 4), // Just a placeholder
+          mintAddress,
+          amount: rentExemptSOL,
         }
       })
 

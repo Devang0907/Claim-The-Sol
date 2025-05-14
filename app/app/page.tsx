@@ -31,7 +31,7 @@ export default function AppPage() {
   const [txSignature, setTxSignature] = useState("")
   const [scanProgress, setScanProgress] = useState(0)
   const totalSelected = selectedAccounts.length
-  const totalRecoverable = totalSelected * 0.00203
+  const [totalRecoverable, setTotalRecoverable] = useState(0);
   const donationAmount = (totalRecoverable * donationPercentage) / 100
   const userReceives = totalRecoverable - donationAmount
   const cluster = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'mainnet-beta'
@@ -71,6 +71,11 @@ export default function AppPage() {
       if (emptyAccounts.length > 0) {
         setEmptyAccounts(emptyAccounts)
         setSelectedAccounts(emptyAccounts.map((account) => account.address))
+        let total=0
+        emptyAccounts.map((account) => {
+          total+=account.amount;
+        })
+        setTotalRecoverable(total)
       }
 
       setIsScanning(false)
