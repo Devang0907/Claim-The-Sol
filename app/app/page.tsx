@@ -4,7 +4,6 @@ import { useState } from "react"
 import Link from "next/link"
 import { useWallet, useConnection } from "@solana/wallet-adapter-react"
 import { ArrowLeft, Check, Coins, ExternalLink, Loader2, RefreshCw, Wallet } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -26,7 +25,7 @@ export default function AppPage() {
   const [isClosing, setIsClosing] = useState(false)
   const [emptyAccounts, setEmptyAccounts] = useState<EmptyTokenAccount[]>([])
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
-  const [donationPercentage, setDonationPercentage] = useState(5)
+  const [donationPercentage, setDonationPercentage] = useState(10)
   const [scanComplete, setScanComplete] = useState(false)
   const [txSignature, setTxSignature] = useState("")
   const [scanProgress, setScanProgress] = useState(0)
@@ -310,16 +309,17 @@ export default function AppPage() {
                     <Slider
                       value={[donationPercentage]}
                       onValueChange={(value) => setDonationPercentage(value[0])}
-                      max={20}
+                      min={10}
+                      max={50}
                       step={1}
                       className="py-2"
                     />
                     <div className="mt-1 flex justify-between text-xs text-purple-400">
-                      <span>0%</span>
-                      <span>5%</span>
                       <span>10%</span>
-                      <span>15%</span>
                       <span>20%</span>
+                      <span>30%</span>
+                      <span>40%</span>
+                      <span>50%</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -381,28 +381,28 @@ export default function AppPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-purple-900/40">
+                <TabsList className="mb-4 w-full flex gap-1 sm:grid sm:grid-cols-3 bg-purple-900/40">
                   <TabsTrigger
                     value="overview"
-                    className="data-[state=active]:bg-purple-800 data-[state=active]:text-white"
+                    className="flex-1 px-2 py-1.5 text-sm data-[state=active]:bg-purple-800 data-[state=active]:text-white"
                   >
                     Overview
                   </TabsTrigger>
                   <TabsTrigger
                     value="technical"
-                    className="data-[state=active]:bg-purple-800 data-[state=active]:text-white"
+                    className="flex-1 px-2 py-1.5 text-sm data-[state=active]:bg-purple-800 data-[state=active]:text-white"
                   >
                     Technical Details
                   </TabsTrigger>
                   <TabsTrigger
                     value="security"
-                    className="data-[state=active]:bg-purple-800 data-[state=active]:text-white"
+                    className="flex-1 px-2 py-1.5 text-sm data-[state=active]:bg-purple-800 data-[state=active]:text-white"
                   >
                     Security
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="overview" className="mt-4 text-purple-100">
-                  <p className="mb-4">
+                <TabsContent value="overview" className="mt-4 text-purple-100 text-sm sm:text-base">
+                  <p className="mb-3">
                     On Solana, each token you receive creates a dedicated account that holds ~0.002 SOL as rent. When
                     you send all tokens away, this account remains open with the SOL still locked inside.
                   </p>
@@ -411,28 +411,28 @@ export default function AppPage() {
                     returns that locked SOL directly to your wallet in a single transaction.
                   </p>
                 </TabsContent>
-                <TabsContent value="technical" className="mt-4 text-purple-100">
-                  <p className="mb-4">
+                <TabsContent value="technical" className="mt-2 text-purple-100 text-sm sm:text-base">
+                  <p className="mb-3">
                     Under the hood, this app uses{" "}
-                    <code className="rounded bg-purple-900 px-1 py-0.5">@solana/web3.js</code> and{" "}
-                    <code className="rounded bg-purple-900 px-1 py-0.5">@solana/spl-token</code> to:
+                    <code className="rounded bg-purple-900 px-1 py-0.5 text-xs sm:text-sm">@solana/web3.js</code> and{" "}
+                    <code className="rounded bg-purple-900 px-1 py-0.5 text-xs sm:text-sm">@solana/spl-token</code> to:
                   </p>
-                  <ol className="ml-6 list-decimal space-y-2">
+                  <ol className="ml-4 list-decimal space-y-1 sm:space-y-2">
                     <li>
-                      Call <code className="rounded bg-purple-900 px-1 py-0.5">getParsedTokenAccountsByOwner</code> to
+                      Call <code className="rounded bg-purple-900 px-1 py-0.5 text-xs sm:text-sm">getParsedTokenAccountsByOwner</code> to
                       find all your SPL token accounts
                     </li>
                     <li>Filter those with a balance of 0 tokens</li>
                     <li>
-                      Create <code className="rounded bg-purple-900 px-1 py-0.5">closeAccountInstructions</code> for
+                      Create <code className="rounded bg-purple-900 px-1 py-0.5 text-xs sm:text-sm">closeAccountInstructions</code> for
                       each selected account
                     </li>
                     <li>Bundle them into a single transaction for efficiency</li>
                   </ol>
                 </TabsContent>
-                <TabsContent value="security" className="mt-4 text-purple-100">
-                  <p className="mb-4">This app is designed with security as a priority:</p>
-                  <ul className="ml-6 list-disc space-y-2">
+                <TabsContent value="security" className="mt-2 text-purple-100 text-sm sm:text-base">
+                  <p className="mb-3">This app is designed with security as a priority:</p>
+                  <ul className="ml-4 list-disc space-y-1 sm:space-y-2">
                     <li>Your private keys never leave your wallet</li>
                     <li>All code runs client-side in your browser</li>
                     <li>You only sign transactions to close your own accounts</li>
