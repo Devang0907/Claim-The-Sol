@@ -32,8 +32,8 @@ export default function AppPage() {
   const [scanProgress, setScanProgress] = useState(0)
   const totalSelected = selectedAccounts.length
   const [totalRecoverable, setTotalRecoverable] = useState(0);
-  const donationAmount = (totalRecoverable * donationPercentage) / 100
-  const userReceives = totalRecoverable - donationAmount
+  const donationAmount = (((totalRecoverable / emptyAccounts.length) * totalSelected )* donationPercentage) / 100
+  const userReceives = ((totalRecoverable / emptyAccounts.length) * totalSelected) - donationAmount
   const cluster = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'mainnet-beta'
 
   const handleScanAccounts = async () => {
@@ -107,7 +107,16 @@ export default function AppPage() {
       if (!publicKey || !wallet) {
         throw new Error("Wallet not connected")
       }
-      const signature = await closeEmptyAccounts(connection, publicKey, selectedAccounts, wallet.adapter)
+      
+      // Pass the donation percentage to the closeEmptyAccounts function
+      const signature = await closeEmptyAccounts(
+        connection, 
+        publicKey, 
+        selectedAccounts, 
+        wallet.adapter, 
+        donationPercentage
+      )
+      
       setTxSignature(signature)
       setIsClosing(false)
       toast({
@@ -299,7 +308,7 @@ export default function AppPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-purple-300">Total Recoverable</span>
-                    <span className="font-medium text-white">{totalRecoverable.toFixed(5)} SOL</span>
+                    <span className="font-medium text-white">{(( totalRecoverable /emptyAccounts.length) * totalSelected).toFixed(5)} SOL</span>
                   </div>
                   <Separator className="bg-purple-800" />
                   <div>
@@ -310,7 +319,7 @@ export default function AppPage() {
                     <Slider
                       value={[donationPercentage]}
                       onValueChange={(value) => setDonationPercentage(value[0])}
-                      max={20}
+                      max={50}
                       step={1}
                       className="py-2"
                     />
@@ -319,7 +328,7 @@ export default function AppPage() {
                       <span>5%</span>
                       <span>10%</span>
                       <span>15%</span>
-                      <span>20%</span>
+                      <span>50%</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -361,7 +370,6 @@ export default function AppPage() {
                       View on Explorer
                       <ExternalLink className="h-3 w-3" />
                     </a>
-
                   </div>
                 )}
               </CardContent>
@@ -428,6 +436,10 @@ export default function AppPage() {
                       each selected account
                     </li>
                     <li>Bundle them into a single transaction for efficiency</li>
+                    <li>
+                      Split the recovered SOL between your wallet and the
+                      developer's address
+                    </li>
                   </ol>
                 </TabsContent>
                 <TabsContent value="security" className="mt-4 text-purple-100">
@@ -438,6 +450,7 @@ export default function AppPage() {
                     <li>You only sign transactions to close your own accounts</li>
                     <li>The app cannot access any funds beyond the empty accounts you select</li>
                     <li>All transaction details are visible in your wallet before signing</li>
+                    <li>Donations transparently calculated</li>
                   </ul>
                 </TabsContent>
               </Tabs>

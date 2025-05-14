@@ -1,6 +1,5 @@
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js"
-import { Transaction } from "@solana/web3.js"
-import { createCloseAccountInstruction, TOKEN_PROGRAM_ID, AccountLayout  } from "@solana/spl-token"
+import { Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction } from "@solana/web3.js"
+import { createCloseAccountInstruction, TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token"
 import { WalletAdapter } from "@solana/wallet-adapter-base"
 
 export interface EmptyTokenAccount {
@@ -59,46 +58,74 @@ export async function scanEmptyTokenAccounts(
 }
 
 /**
- * Creates instructions to close multiple token accounts
- * This is a placeholder - in a real implementation you would:
- * 1. Import createCloseAccountInstruction from @solana/spl-token
- * 2. Create instructions for each account
- * 3. Bundle them into a transaction
- * 4. Sign and send the transaction
+ * Creates instructions to close multiple token accounts and splits the recovered SOL
+ * between the user's wallet and a donation address
+ * 
+ * @param connection Solana connection
+ * @param walletPublicKey User's wallet public key
+ * @param accountAddresses Array of token account addresses to close
+ * @param wallet User's wallet adapter
+ * @param donationPercentage Percentage of recovered SOL to donate (0-100)
+ * @returns Transaction signature
  */
 export async function closeEmptyAccounts(
   connection: Connection,
   walletPublicKey: PublicKey,
   accountAddresses: string[],
   wallet: WalletAdapter,
+  donationPercentage: number = 10
 ): Promise<string> {
   try {
-    // Step 1: Get latest blockhash
+    // Step 1: Get donation address from environment variable
+    const donationAddressString = process.env.NEXT_PUBLIC_DONATION_ADDRESS;
+    if (!donationAddressString) {
+      throw new Error("Donation address not configured in environment variables");
+    }
+
+    const donationAddress = new PublicKey(donationAddressString);
+
+    // Step 2: Get latest blockhash
     const latestBlockhash = await connection.getLatestBlockhash();
 
-    // Step 2: Create transaction with close instructions
+    // Step 3: Create transaction with close instructions
     const transaction = new Transaction();
+
+    // For each account, we'll first get its balance
+    const rentExemptAmount = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
 
     for (const address of accountAddresses) {
       const tokenAccountPubkey = new PublicKey(address);
 
+      // Calculate donation amount in lamports
+      const donationLamports = Math.floor((rentExemptAmount * donationPercentage) / 100);
+      const userLamports = rentExemptAmount - donationLamports;
+
+      // First, close the token account but send funds to a temporary address (the user)
       const closeIx = createCloseAccountInstruction(
         tokenAccountPubkey,   // account to close
-        walletPublicKey,      // destination (reclaimed SOL goes here)
+        walletPublicKey,      // temporary destination
         walletPublicKey       // authority (user who owns the token account)
       );
 
-      transaction.add(closeIx);
+      // Then, transfer the donation portion to the donation address
+      const transferIx = SystemProgram.transfer({
+        fromPubkey: walletPublicKey,
+        toPubkey: donationAddress,
+        lamports: donationLamports
+      });
+
+      // Add both instructions to the transaction
+      transaction.add(closeIx, transferIx);
     }
 
-    // Step 3: Set blockhash & fee payer 
+    // Step 4: Set blockhash & fee payer 
     transaction.recentBlockhash = latestBlockhash.blockhash;
     transaction.feePayer = walletPublicKey;
 
-    // Step 4: Send transaction
+    // Step 5: Send transaction
     const signature = await wallet.sendTransaction(transaction, connection);
 
-    // Step 5: Confirm transaction with new style API
+    // Step 6: Confirm transaction with new style API
     await connection.confirmTransaction({
       blockhash: latestBlockhash.blockhash,
       lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
