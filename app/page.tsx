@@ -113,7 +113,7 @@ export default function Home() {
             <Link href="#" className="hover:text-purple-100">
               Privacy
             </Link>
-            <Link href="https://github.com" target="_blank" className="hover:text-purple-100">
+            <Link href="https://github.com/Devang0907/Solback" target="_blank" className="hover:text-purple-100">
               GitHub
             </Link>
           </div>
