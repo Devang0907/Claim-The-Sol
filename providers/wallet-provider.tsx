@@ -1,17 +1,20 @@
 "use client"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
-
-// Import the wallet adapter styles
+import { useNetworkStore } from "@/store/networkStore"
 import "../styles/globals.css"
-// Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css'
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
-  
-  // You can also use a custom RPC endpoint
-  const endpoint = process.env.NEXT_PUBLIC_RPC || "https://api.devnet.solana.com";
+   const { network } = useNetworkStore()
 
+  let endpoint;
+  if(network == "mainnet-beta"){
+     endpoint = process.env.NEXT_PUBLIC_RPC_MAINNET || "https://api.mainnet-beta.solana.com";
+  } else{
+    endpoint = process.env.NEXT_PUBLIC_RPC_DEVNET || "https://api.devnet.solana.com";
+  }
+  
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={[]} autoConnect>

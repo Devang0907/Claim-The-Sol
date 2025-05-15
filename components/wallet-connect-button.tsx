@@ -13,11 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
-
+import { useNetworkStore } from "@/store/networkStore"
 export default function WalletConnectButton() {
   const { toast } = useToast()
   const { publicKey, connected, disconnect } = useWallet()
-
+   const { network } = useNetworkStore()
   // Custom styled wallet button for non-connected state
   if (!connected || !publicKey) {
     return (
@@ -55,7 +55,10 @@ export default function WalletConnectButton() {
         <DropdownMenuItem
           className="cursor-pointer text-purple-200 focus:bg-purple-900 focus:text-white"
           onClick={() => {
-            window.open(`https://explorer.solana.com/address/${publicKey.toString()}`, "_blank")
+            window.open(
+              `https://explorer.solana.com/address/${publicKey.toString()}${network !== 'mainnet-beta' ? `?cluster=${network}` : ''}`,
+              "_blank"
+            )
           }}
         >
           <ExternalLink className="mr-2 h-4 w-4" />
