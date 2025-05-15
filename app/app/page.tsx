@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast"
 import WalletConnectButton from "@/components/wallet-connect-button"
 import { scanEmptyTokenAccounts, closeEmptyAccounts, type EmptyTokenAccount } from "@/utils/solana-helpers"
 import NetworkSelector, { Network } from "@/components/network-selector"
+import { useNetworkStore } from "@/store/networkStore"
 
 export default function AppPage() {
   const { toast } = useToast()
@@ -32,14 +33,14 @@ export default function AppPage() {
   const [scanProgress, setScanProgress] = useState(0)
   const totalSelected = selectedAccounts.length
   const [totalRecoverable, setTotalRecoverable] = useState(0);
-  const donationAmount = (((totalRecoverable / emptyAccounts.length) * totalSelected) * donationPercentage) / 100
-  const userReceives = ((totalRecoverable / emptyAccounts.length) * totalSelected) - donationAmount
+  const recoveryPerAccount = emptyAccounts.length > 0 ? totalRecoverable / emptyAccounts.length : 0;
+  const totalRecoverableSelected = recoveryPerAccount * totalSelected;
+  const donationAmount = (totalRecoverableSelected * donationPercentage) / 100;
+  const userReceives = totalRecoverableSelected - donationAmount;
+  const { network, setNetwork } = useNetworkStore()
   
-  const [currentNetwork, setCurrentNetwork] = useState<Network>("mainnet-beta")
-
   const handleNetworkChange = (network: Network) => {
-    setCurrentNetwork(network)
-    console.log("page: ",currentNetwork)
+    setNetwork(network)
   }
 
   const handleScanAccounts = async () => {
@@ -167,7 +168,7 @@ export default function AppPage() {
           <div className="flex flex-row gap-9 sm:flex-row sm:items-center sm:gap-4">
             <WalletConnectButton />
             <NetworkSelector
-              defaultNetwork={currentNetwork}
+              defaultNetwork={network}
               onNetworkChange={handleNetworkChange}
             />
           </div>
@@ -320,12 +321,12 @@ export default function AppPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-purple-300">Total Recoverable</span>
-                    <span className="font-medium text-white">{((totalRecoverable / emptyAccounts.length) * totalSelected).toFixed(5)} SOL</span>
+                    <span className="font-medium text-white">{totalRecoverableSelected.toFixed(5)} SOL</span>
                   </div>
                   <Separator className="bg-purple-800" />
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-sm text-purple-300">Optional Donation</span>
+                      <span className="text-sm text-purple-300">Donation</span>
                       <span className="font-medium text-white">{donationPercentage}%</span>
                     </div>
                     <Slider
@@ -375,7 +376,7 @@ export default function AppPage() {
                     <Check className="mx-auto mb-2 h-6 w-6 text-green-400" />
                     <p className="mb-2 text-sm font-medium text-green-400">Transaction Successful!</p>
                     <a
-                      href={`https://explorer.solana.com/tx/${txSignature}${currentNetwork !== 'mainnet-beta' ? `?cluster=${currentNetwork}` : ''}`}
+                      href={`https://explorer.solana.com/tx/${txSignature}${network !== 'mainnet-beta' ? `?cluster=${network}` : ''}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-green-300 hover:text-green-200"
