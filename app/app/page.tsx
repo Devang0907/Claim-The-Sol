@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import WalletConnectButton from "@/components/wallet-connect-button"
 import { scanEmptyTokenAccounts, closeEmptyAccounts, type EmptyTokenAccount } from "@/utils/solana-helpers"
+import NetworkSelector, { Network } from "@/components/network-selector"
 
 export default function AppPage() {
   const { toast } = useToast()
@@ -31,9 +32,15 @@ export default function AppPage() {
   const [scanProgress, setScanProgress] = useState(0)
   const totalSelected = selectedAccounts.length
   const [totalRecoverable, setTotalRecoverable] = useState(0);
-  const donationAmount = (((totalRecoverable / emptyAccounts.length) * totalSelected )* donationPercentage) / 100
+  const donationAmount = (((totalRecoverable / emptyAccounts.length) * totalSelected) * donationPercentage) / 100
   const userReceives = ((totalRecoverable / emptyAccounts.length) * totalSelected) - donationAmount
-  const cluster = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'mainnet-beta'
+  
+  const [currentNetwork, setCurrentNetwork] = useState<Network>("mainnet-beta")
+
+  const handleNetworkChange = (network: Network) => {
+    setCurrentNetwork(network)
+    console.log("page: ",currentNetwork)
+  }
 
   const handleScanAccounts = async () => {
     if (!connected || !publicKey) {
@@ -70,9 +77,9 @@ export default function AppPage() {
       if (emptyAccounts.length > 0) {
         setEmptyAccounts(emptyAccounts)
         setSelectedAccounts(emptyAccounts.map((account) => account.address))
-        let total=0
+        let total = 0
         emptyAccounts.map((account) => {
-          total+=account.amount;
+          total += account.amount;
         })
         setTotalRecoverable(total)
       }
@@ -106,16 +113,16 @@ export default function AppPage() {
       if (!publicKey || !wallet) {
         throw new Error("Wallet not connected")
       }
-      
+
       // Pass the donation percentage to the closeEmptyAccounts function
       const signature = await closeEmptyAccounts(
-        connection, 
-        publicKey, 
-        selectedAccounts, 
-        wallet.adapter, 
+        connection,
+        publicKey,
+        selectedAccounts,
+        wallet.adapter,
         donationPercentage
       )
-      
+
       setTxSignature(signature)
       setIsClosing(false)
       toast({
@@ -152,12 +159,18 @@ export default function AppPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 to-indigo-950">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-2 text-white hover:text-purple-200">
             <ArrowLeft className="h-5 w-5" />
             <span>Back to Home</span>
           </Link>
-          <WalletConnectButton />
+          <div className="flex flex-row gap-9 sm:flex-row sm:items-center sm:gap-4">
+            <WalletConnectButton />
+            <NetworkSelector
+              defaultNetwork={currentNetwork}
+              onNetworkChange={handleNetworkChange}
+            />
+          </div>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
@@ -307,7 +320,7 @@ export default function AppPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-purple-300">Total Recoverable</span>
-                    <span className="font-medium text-white">{(( totalRecoverable /emptyAccounts.length) * totalSelected).toFixed(5)} SOL</span>
+                    <span className="font-medium text-white">{((totalRecoverable / emptyAccounts.length) * totalSelected).toFixed(5)} SOL</span>
                   </div>
                   <Separator className="bg-purple-800" />
                   <div>
@@ -362,7 +375,7 @@ export default function AppPage() {
                     <Check className="mx-auto mb-2 h-6 w-6 text-green-400" />
                     <p className="mb-2 text-sm font-medium text-green-400">Transaction Successful!</p>
                     <a
-                      href={`https://explorer.solana.com/tx/${txSignature}${cluster !== 'mainnet-beta' ? `?cluster=${cluster}` : ''}`}
+                      href={`https://explorer.solana.com/tx/${txSignature}${currentNetwork !== 'mainnet-beta' ? `?cluster=${currentNetwork}` : ''}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-green-300 hover:text-green-200"
