@@ -32,9 +32,9 @@ export default function NetworkSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="bg-purple-800/50 border-purple-700 text-white hover:bg-purple-700/60 hover:text-white ml-5">
+        <Button variant="outline" className="bg-purple-800/50 border-purple-700 text-white hover:bg-purple-700/60 hover:text-white ml-3">
           <Globe className="mr-2 h-4 w-4 text-yellow-400" />
-          {network === "mainnet-beta" ? "Mainnet Beta" : "Devnet"}
+          {network === "mainnet-beta" ? "Mainnet" : "Devnet"}
           <ChevronDown className="ml-2 h-4 w-4 opacity-70" />
         </Button>
       </DropdownMenuTrigger>
@@ -43,7 +43,7 @@ export default function NetworkSelector({
           className={`cursor-pointer hover:bg-purple-900 ${network === "mainnet-beta" ? "text-yellow-400" : "text-white"}`}
           onClick={() => handleNetworkChange("mainnet-beta")}
         >
-          Mainnet Beta
+          Mainnet
         </DropdownMenuItem>
         <DropdownMenuItem 
           className={`cursor-pointer hover:bg-purple-900 ${network === "devnet" ? "text-yellow-400" : "text-white"}`}
